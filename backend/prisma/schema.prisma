@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  ADMIN
+  AGENT
+}
+
+enum DealType {
+  Buy
+  Rent
+  Sell
+}
+
+enum LeadStatus {
+  New
+  Contacted
+  Followup
+  Converted
+  Lost
+}
+
+enum FollowUpStatus {
+  Pending
+  Done
+  Cancelled
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  role      Role     @default(AGENT)
+  createdAt DateTime @default(now())
+  leads     Lead[]   @relation("AssignedLeads")
+
+  @@index([email])
+}
+
+model Lead {
+  id           String      @id @default(cuid())
+  name         String
+  phone        String?
+  email        String?
+  budget       Float?
+  location     String?
+  propertyType String?
+  dealType     DealType    @default(Buy)
+  leadSource   String?
+  status       LeadStatus  @default(New)
+  assignedToId String?
+  assignedTo   User?       @relation("AssignedLeads", fields: [assignedToId], references: [id])
+  followupDate DateTime?
+  notes        String?
+  createdAt    DateTime    @default(now())
+  followUps    FollowUp[]
+
+  @@index([status])
+  @@index([assignedToId])
+  @@index([location])
+  @@index([createdAt])
+}
+
+model FollowUp {
+  id        String         @id @default(cuid())
+  leadId    String
+  lead      Lead           @relation(fields: [leadId], references: [id], onDelete: Cascade)
+  title     String
+  date      DateTime
+  notes     String?
+  status    FollowUpStatus @default(Pending)
+  createdAt DateTime       @default(now())
+
+  @@index([leadId])
+  @@index([date])
+}
