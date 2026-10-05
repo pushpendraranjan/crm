@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Building2 } from 'lucide-react';
 import toast from 'react-hot-toast';
@@ -79,12 +79,6 @@ export default function LoginPage() {
           </button>
         </form>
 
-        <div className="mt-6 text-center">
-          <p className="text-sm text-gray-500">
-            Don't have an account?{' '}
-            <Link to="/register" className="text-blue-600 font-medium hover:underline">Register</Link>
-          </p>
-        </div>
       </div>
     </div>
   );

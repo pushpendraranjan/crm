@@ -19,10 +19,12 @@ const allowedOrigins = process.env.CLIENT_URL
 app.use(
   cors({
     origin: (origin, callback) => {
-      if (!origin || allowedOrigins.includes('*') || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
-        return callback(null, true);
-      }
-      return callback(null, true);
+      const isAllowed =
+        !origin ||
+        allowedOrigins.includes('*') ||
+        allowedOrigins.includes(origin) ||
+        process.env.NODE_ENV !== 'production';
+      callback(null, isAllowed);
     },
     credentials: true,
   })

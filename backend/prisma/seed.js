@@ -25,7 +25,7 @@ async function main() {
   const adminPassword = await bcrypt.hash(process.env.SEED_ADMIN_PASSWORD, 10);
   const admin = await prisma.user.upsert({
     where: { email: seedAdminEmail },
-    update: {},
+    update: { name: 'Admin User', password: adminPassword, role: 'ADMIN' },
     create: {
       name: 'Admin User',
       email: seedAdminEmail,
@@ -38,7 +38,7 @@ async function main() {
   const agentPassword = await bcrypt.hash(process.env.SEED_AGENT_PASSWORD, 10);
   const agent = await prisma.user.upsert({
     where: { email: seedAgentEmail },
-    update: {},
+    update: { name: 'Sales Agent', password: agentPassword, role: 'AGENT' },
     create: {
       name: 'Sales Agent',
       email: seedAgentEmail,
@@ -120,30 +120,43 @@ async function main() {
   ];
 
   for (const leadData of leads) {
-    const lead = await prisma.lead.create({ data: leadData });
+    const existingLead = await prisma.lead.findFirst({
+      where: { name: leadData.name, email: leadData.email },
+    });
+    const lead = existingLead || await prisma.lead.create({ data: leadData });
     
     // Add follow-ups for some leads
     if (leadData.name === 'Rahul Sharma') {
-      await prisma.followUp.create({
-        data: {
-          leadId: lead.id,
-          title: 'Initial site visit',
-          date: new Date('2026-10-05T16:00:00Z'),
-          notes: 'Client interested in 2BHK, schedule site visit in Andheri West',
-          status: 'Pending',
-        },
+      const existingFollowUp = await prisma.followUp.findFirst({
+        where: { leadId: lead.id, title: 'Initial site visit' },
       });
+      if (!existingFollowUp) {
+        await prisma.followUp.create({
+          data: {
+            leadId: lead.id,
+            title: 'Initial site visit',
+            date: new Date('2026-10-05T16:00:00Z'),
+            notes: 'Client interested in 2BHK, schedule site visit in Andheri West',
+            status: 'Pending',
+          },
+        });
+      }
     }
     if (leadData.name === 'Sneha Joshi') {
-      await prisma.followUp.create({
-        data: {
-          leadId: lead.id,
-          title: 'Price negotiation call',
-          date: new Date('2026-10-04T14:00:00Z'),
-          notes: 'Discuss pricing and amenities for penthouse',
-          status: 'Pending',
-        },
+      const existingFollowUp = await prisma.followUp.findFirst({
+        where: { leadId: lead.id, title: 'Price negotiation call' },
       });
+      if (!existingFollowUp) {
+        await prisma.followUp.create({
+          data: {
+            leadId: lead.id,
+            title: 'Price negotiation call',
+            date: new Date('2026-10-04T14:00:00Z'),
+            notes: 'Discuss pricing and amenities for penthouse',
+            status: 'Pending',
+          },
+        });
+      }
     }
   }
 

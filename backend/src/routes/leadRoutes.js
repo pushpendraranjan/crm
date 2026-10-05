@@ -1,5 +1,5 @@
 const express = require('express');
-const { body } = require('express-validator');
+const { body, query } = require('express-validator');
 const {
   createLead,
   getLeads,
@@ -31,6 +31,17 @@ const leadUpdateValidation = [
   body('status').optional().isIn(['New', 'Contacted', 'Followup', 'Converted', 'Lost']).withMessage('Invalid status'),
 ];
 
+const leadQueryValidation = [
+  query('page').optional().isInt({ min: 1 }).withMessage('Page must be a positive integer'),
+  query('limit').optional().isInt({ min: 1, max: 100 }).withMessage('Limit must be between 1 and 100'),
+  query('status').optional({ checkFalsy: true }).isIn(['New', 'Contacted', 'Followup', 'Converted', 'Lost']).withMessage('Invalid status'),
+  query('location').optional().isString().trim(),
+  query('propertyType').optional().isString().trim(),
+  query('assignedToId').optional().isString().trim(),
+  query('sortBy').optional().isIn(['createdAt', 'name', 'status', 'budget', 'followupDate']).withMessage('Invalid sort field'),
+  query('sortOrder').optional().isIn(['asc', 'desc']).withMessage('Invalid sort order'),
+];
+
 const {
   createFollowUp,
   getFollowUpsByLead,
@@ -45,7 +56,7 @@ const followUpValidation = [
 ];
 
 router.get('/dashboard', protect, getDashboardStats);
-router.get('/', protect, getLeads);
+router.get('/', protect, leadQueryValidation, validate, getLeads);
 router.get('/:id', protect, getLeadById);
 router.post('/', protect, leadValidation, validate, createLead);
 router.put('/:id', protect, leadUpdateValidation, validate, updateLead);

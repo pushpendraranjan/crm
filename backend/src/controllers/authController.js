@@ -10,7 +10,7 @@ const generateToken = (id) => {
 
 const register = async (req, res, next) => {
   try {
-    const { name, email, password, role } = req.body;
+    const { name, email, password, role = 'AGENT' } = req.body;
 
     const existing = await prisma.user.findUnique({ where: { email } });
     if (existing) {
@@ -24,14 +24,12 @@ const register = async (req, res, next) => {
         name,
         email,
         password: hashedPassword,
-        role: role && role === 'ADMIN' ? 'ADMIN' : 'AGENT',
+        role,
       },
       select: { id: true, name: true, email: true, role: true, createdAt: true },
     });
 
-    const token = generateToken(user.id);
-
-    res.status(201).json({ message: 'Registration successful', token, user });
+    res.status(201).json({ message: 'Account created', user });
   } catch (error) {
     next(error);
   }

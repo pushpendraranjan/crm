@@ -181,7 +181,8 @@ crmDL/
 ### Step 1: Clone and Start Database with Docker
 
 ```bash
-# Set the required variables from the root .env.example in an ignored root .env file.
+# For Docker Compose, set variables from the root .env.example in an ignored root .env file.
+# For a local backend run, set backend/.env from backend/.env.example.
 # Start PostgreSQL container on port 5433 (to avoid conflicts with existing native Postgres)
 docker compose up -d postgres
 ```
@@ -257,14 +258,14 @@ Set these values in the ignored local `backend/.env` file before running the see
 ## 📡 API Documentation
 
 ### 1. Authentication
-- `POST /api/auth/register` — Register a new agent or admin
+- `POST /api/auth/register` *(Admin only)* — Create an agent or admin account
   - Body: `{ name, email, password, role }`
 - `POST /api/auth/login` — Sign in and receive JWT token
   - Body: `{ email, password }`
 - `GET /api/auth/me` *(Protected)* — Returns authenticated user details
 
 ### 2. Users
-- `GET /api/users` *(Protected)* — Returns all users for lead assignment dropdowns
+- `GET /api/users` *(Admin only)* — Returns all users for account management and assignment
 
 ### 3. Leads
 - `GET /api/leads/dashboard` *(Protected)* — Returns metrics:
@@ -316,8 +317,8 @@ Set these values in the ignored local `backend/.env` file before running the see
 ## 💻 Frontend Overview
 
 ### Pages Implemented:
-1. **Login Page (`/login`)**: Login form with validation and error banners.
-2. **Registration Page (`/register`)**: Register name, email, password, and role selection.
+1. **Login Page (`/login`)**: Login form with validation and error banners; users cannot self-register.
+2. **Accounts (`/account`)**: Admin-only user list and account creation for agents or additional admins.
 3. **Dashboard (`/dashboard`)**:
    - 6 KPI stat cards (Total, New, Follow-ups Today, Converted, Lost, Conversion Rate)
    - Interactive Recharts Pie Chart & Bar Chart of status distribution
@@ -339,31 +340,27 @@ Set these values in the ignored local `backend/.env` file before running the see
 
 ## ☁️ Deployment Guide
 
-### Option 1: Render.com (Recommended - Full Stack + Postgres Blueprint)
-This repository includes a `render.yaml` blueprint that deploys the entire stack automatically:
-1. Push this repository to GitHub.
-2. Log into [Render.com](https://render.com) and click **New +** → **Blueprint**.
-3. Connect your repository.
-4. Render will automatically provision:
-   - Hosted PostgreSQL database (`crm-postgres-db`)
-   - Backend web service (`crm-backend`) running Prisma migrations & seeds
-   - Frontend static site (`crm-frontend`) with SPA rewrites
+This project can run the API on Render and the Vite frontend on Vercel. Do not commit environment values.
 
-### Option 2: Hosted Database (Neon / Supabase) + Vercel / Railway
-1. **Database**: Create a free PostgreSQL database on [Neon.tech](https://neon.tech) or [Supabase](https://supabase.com). Copy the connection URI.
-2. **Backend (Render / Railway / Fly.io)**:
-   - Environment variables:
-     - `DATABASE_URL`: Your hosted PostgreSQL URI
-     - `JWT_SECRET`: Random 32+ character string
-     - `CLIENT_URL`: Your deployed frontend URL
-     - `NODE_ENV`: `production`
-   - Build Command: `npm install && npx prisma generate && npx prisma migrate deploy && npm run prisma:seed`
-   - Start Command: `node src/server.js`
-3. **Frontend (Vercel / Netlify / Render)**:
-   - Root directory: `frontend`
-   - Build Command: `npm run build`
-   - Output Directory: `dist`
-   - Environment variable: `VITE_API_URL=https://your-backend-domain.com/api`
+### Render Backend
+1. Connect the GitHub repository and create the backend service with root directory `backend`.
+2. Use build command `npm ci && npx prisma generate && npx prisma migrate deploy && npm run prisma:seed` and start command `npm start`.
+3. Configure `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRES_IN`, `CLIENT_URL`, `SEED_ADMIN_EMAIL`, `SEED_ADMIN_PASSWORD`, `SEED_AGENT_EMAIL`, and `SEED_AGENT_PASSWORD` in the Render service environment. Set `CLIENT_URL` to the exact Vercel frontend origin.
+4. The seed step creates the initial admin and agent accounts. After signing in as the admin, create further profiles from **Account**.
+
+### Vercel Frontend
+1. Import the same GitHub repository into Vercel and set the root directory to `frontend`.
+2. Use build command `npm run build` and output directory `dist`.
+3. Set `VITE_API_URL` to the Render API base URL, including `/api`, for example `https://crm-backend-k0yq.onrender.com/api`.
+4. Redeploy after changing environment variables because Vite embeds them during the build.
+
+### Current Project Links
+- Source repository: https://github.com/pushpendraranjan/crm
+- Backend API: https://crm-backend-k0yq.onrender.com/api
+- Backend health: https://crm-backend-k0yq.onrender.com/health
+- Configured frontend domain: https://crm-adam-28f2.vercel.app
+
+The frontend domain must be verified after redeployment. During the latest audit it served a Vercel login/protection page rather than the CRM, so confirm the domain is assigned to the Vite project and the deployment is accessible before submitting.
 
 ---
 

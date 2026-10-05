@@ -12,7 +12,7 @@ export default function EditLeadPage() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const { data: leadData, isLoading } = useQuery<{ lead: Lead }>({
+  const { data: leadData, isLoading, error } = useQuery<{ lead: Lead }>({
     queryKey: ['lead', id],
     queryFn: () => api.get(`/leads/${id}`).then((r) => r.data),
     enabled: !!id,
@@ -40,6 +40,14 @@ export default function EditLeadPage() {
     return (
       <div className="flex items-center justify-center h-64">
         <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+      </div>
+    );
+  }
+
+  if (error || !leadData?.lead) {
+    return (
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-red-700" role="alert">
+        Lead not found or failed to load.
       </div>
     );
   }

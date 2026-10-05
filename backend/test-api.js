@@ -76,22 +76,31 @@ async function runTests() {
     });
     assert(badLogin.status === 401, 'POST /api/auth/login with wrong password returns 401');
 
-    // 4. Auth - Register new user
+    // 4. Auth - Anonymous account creation is forbidden
+    const anonymousRegister = await request('POST', '/api/auth/register', {
+      name: 'Unauthorized Agent',
+      email: `unauthorized_${Date.now()}@example.com`,
+      password: temporaryPassword,
+      role: 'ADMIN',
+    });
+    assert(anonymousRegister.status === 401, 'POST /api/auth/register requires an admin token');
+
+    // 5. Auth - Admin creates a new user
     const testEmail = `testuser_${Date.now()}@example.com`;
     const regRes = await request('POST', '/api/auth/register', {
       name: 'Test Agent',
       email: testEmail,
       password: temporaryPassword,
       role: 'AGENT',
-    });
-    assert(regRes.status === 201 && regRes.data.token, 'POST /api/auth/register creates user');
+    }, token);
+    assert(regRes.status === 201 && regRes.data.user?.role === 'AGENT' && !regRes.data.token, 'POST /api/auth/register creates an agent without authenticating it');
 
-    // 5. Auth - Register duplicate email
+    // 6. Auth - Register duplicate email
     const dupRes = await request('POST', '/api/auth/register', {
       name: 'Dup Agent',
       email: testEmail,
       password: temporaryPassword,
-    });
+    }, token);
     assert(dupRes.status === 409, 'POST /api/auth/register duplicate email returns 409');
 
     // 6. Auth - GET /api/auth/me

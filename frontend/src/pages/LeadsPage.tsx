@@ -27,7 +27,7 @@ export default function LeadsPage() {
 
   const params = { page, limit: 10, search, status, assignedToId, location, propertyType, sortBy, sortOrder };
 
-  const { data, isLoading } = useQuery<LeadsResponse>({
+  const { data, isLoading, error, refetch } = useQuery<LeadsResponse>({
     queryKey: ['leads', params],
     queryFn: () => api.get('/leads', { params }).then((r) => r.data),
     placeholderData: (prev) => prev,
@@ -152,6 +152,11 @@ export default function LeadsPage() {
         {isLoading ? (
           <div className="flex items-center justify-center h-48">
             <div className="animate-spin w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full" />
+          </div>
+        ) : error ? (
+          <div className="flex flex-col items-center gap-3 p-10 text-center text-red-700" role="alert">
+            <p>Failed to load leads. Please try again.</p>
+            <button onClick={() => refetch()} className="btn-secondary">Retry</button>
           </div>
         ) : !data?.leads?.length ? (
           <div className="py-16 flex flex-col items-center text-gray-400">
